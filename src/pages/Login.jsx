@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import AuthWrapper from '../components/AuthWrapper.jsx';
 import AuthInput from '../components/AuthInput.jsx';
 import AuthButton from '../components/AuthButton.jsx';
+import { auth } from '../firebase.js';
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [touched, setTouched] = useState({});
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,11 +30,22 @@ const Login = () => {
     password: !form.password ? 'Password is required' : '',
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setTouched({ email: true, password: true });
     if (!errors.email && !errors.password) {
       // UI-only: no real submit
+      setError('');
+      setLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, form.email, form.password);
+        navigate('/');
+      } catch (err) {
+        const message = err?.message || 'Failed to log in. Please try again.';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -98,8 +114,11 @@ const Login = () => {
             </Link>
           </div>
 
-          <div className="pt-3">
-            <AuthButton type="submit" text="Log In" />
+          <div className="pt-3 space-y-2">
+            <AuthButton type="submit" text={loading ? 'Logging in...' : 'Log In'} />
+            {error && (
+              <p className="text-[11px] text-rose-200 text-center">{error}</p>
+            )}
           </div>
         </form>
       </div>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Info, Mail, Lock, User } from 'lucide-react';
 import AuthWrapper from '../components/AuthWrapper.jsx';
 import AuthInput from '../components/AuthInput.jsx';
 import AuthButton from '../components/AuthButton.jsx';
+import { auth } from '../firebase.js';
 
 const Signup = () => {
   const [form, setForm] = useState({
@@ -13,6 +15,9 @@ const Signup = () => {
     confirmPassword: '',
   });
   const [touched, setTouched] = useState({});
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,11 +39,22 @@ const Signup = () => {
     confirmPassword: !passwordsMatch ? 'Passwords must match' : '',
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setTouched({ name: true, email: true, password: true, confirmPassword: true });
     if (!errors.name && !errors.email && !errors.password && !errors.confirmPassword) {
       // UI-only: no real submit
+      setError('');
+      setLoading(true);
+      try {
+        await createUserWithEmailAndPassword(auth, form.email, form.password);
+        navigate('/');
+      } catch (err) {
+        const message = err?.message || 'Failed to create account. Please try again.';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -126,8 +142,11 @@ const Signup = () => {
             <p className="text-[11px] text-rose-200">{errors.confirmPassword}</p>
           )}
 
-          <div className="pt-2">
-            <AuthButton type="submit" text="Create Account" />
+          <div className="pt-2 space-y-2">
+            <AuthButton type="submit" text={loading ? 'Creating account...' : 'Create Account'} />
+            {error && (
+              <p className="text-[11px] text-rose-200 text-center">{error}</p>
+            )}
           </div>
         </form>
 
