@@ -1,0 +1,48 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>DailyForge monogram D logo</title>
+  <desc>
+    Minimalist monogram logo using the letter D: double circular rings and a sleek diagonal stroke,
+    white lines on a pure black background with a subtle soft shadow for a premium tech feel.
+  </desc>
+  <!--
+    Palette
+    - Background: #000000
+    - Logo lines: #FFFFFF
+
+    Safe area: keep at least 20% of the icon size empty around all sides when used in layouts.
+    Optional micro-animation (not included): slight diagonal stroke "forge" glow using a soft
+    opacity pulse, or a very subtle upward drift of the inner ring via SMIL.
+  -->
+  <defs>
+    <!-- Soft spotlight to give depth under the rings -->
+    <radialGradient id="df_shadow" cx="50%" cy="60%" r="50%">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0.9" />
+    </radialGradient>
+  </defs>
+
+  <!-- No solid background: SVG background is transparent by default -->
+
+  <!-- Soft inner shadow / depth (very subtle, works on dark backgrounds) -->
+  <ellipse cx="64" cy="72" rx="32" ry="28" fill="url(#df_shadow)" opacity="0.5" />
+
+  <!-- Double circular rings -->
+  <g id="rings" transform="translate(64 64)">
+    <!-- Outer ring -->
+    <circle r="30" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+    <!-- Inner ring -->
+    <circle r="22" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- Sleek diagonal stroke forming the D spine -->
+  <g id="stroke" transform="translate(64 64)">
+    <!-- Slight offset to mimic embossed depth -->
+    <path
+      d="M-4 34L10 -34"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-width="6"
+      stroke-linecap="round"
+    />
+  </g>
+</svg>
