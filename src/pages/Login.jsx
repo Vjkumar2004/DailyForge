@@ -34,11 +34,27 @@ const Login = () => {
     e.preventDefault();
     setTouched({ email: true, password: true });
     if (!errors.email && !errors.password) {
-      // UI-only: no real submit
       setError('');
       setLoading(true);
       try {
         await signInWithEmailAndPassword(auth, form.email, form.password);
+
+        const response = await fetch('http://localhost:5000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.token) {
+            localStorage.setItem('authToken', data.token);
+          }
+        }
+
         navigate('/');
       } catch (err) {
         const message = err?.message || 'Failed to log in. Please try again.';

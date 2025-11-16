@@ -10,6 +10,7 @@ const Navbar = () => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const [currentUser, setCurrentUser] = useState(null);
+  const [streak, setStreak] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -19,6 +20,32 @@ const Navbar = () => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!currentUser || !token) return;
+
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/user/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (typeof data.streak === 'number') {
+          setStreak(data.streak);
+        }
+      } catch (error) {
+        // optional: handle fetch error
+      }
+    };
+
+    fetchProfile();
+  }, [currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -73,11 +100,15 @@ const Navbar = () => {
           )}
           {currentUser && (
             <motion.div
-              className="relative flex items-center gap-2"
+              className="relative flex items-center gap-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
+              <div className="flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+                <span className="text-xs">🔥</span>
+                <span className="font-medium">{streak}d</span>
+              </div>
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}

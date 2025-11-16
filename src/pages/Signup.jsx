@@ -13,6 +13,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    about: '',
   });
   const [touched, setTouched] = useState({});
   const [error, setError] = useState('');
@@ -43,11 +44,29 @@ const Signup = () => {
     e.preventDefault();
     setTouched({ name: true, email: true, password: true, confirmPassword: true });
     if (!errors.name && !errors.email && !errors.password && !errors.confirmPassword) {
-      // UI-only: no real submit
       setError('');
       setLoading(true);
       try {
         await createUserWithEmailAndPassword(auth, form.email, form.password);
+
+        const response = await fetch('http://localhost:5000/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: form.name,
+            email: form.email,
+            password: form.password,
+            about: form.about,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.token) {
+            localStorage.setItem('authToken', data.token);
+          }
+        }
+
         navigate('/');
       } catch (err) {
         const message = err?.message || 'Failed to create account. Please try again.';
@@ -141,6 +160,19 @@ const Signup = () => {
           {touched.confirmPassword && errors.confirmPassword && (
             <p className="text-[11px] text-rose-200">{errors.confirmPassword}</p>
           )}
+
+          <div className="space-y-1 pt-1 text-xs">
+            <label className="block text-xs font-medium text-slate-100">About Me (optional)</label>
+            <textarea
+              name="about"
+              value={form.about}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              rows={4}
+              placeholder="Share a short note about your goals, study style, or what you want to focus on."
+              className="mt-1 w-full rounded-2xl border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 outline-none shadow-inner shadow-slate-950/60 focus:border-cyan-400/80 focus:ring-2 focus:ring-cyan-400/60"
+            />
+          </div>
 
           <div className="pt-2 space-y-2">
             <AuthButton type="submit" text={loading ? 'Creating account...' : 'Create Account'} />

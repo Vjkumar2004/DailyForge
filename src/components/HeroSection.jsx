@@ -1,18 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-const popularRooms = [
-  'UPSC Study Room',
-  'DSA Practice Room',
-  '5AM Yoga Room',
-  'Deep Work Room',
-  'Pomodoro Sprint Room',
-  'No-Scroll Focus Pod',
-];
-
 const HeroSection = () => {
   const navigate = useNavigate();
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/rooms/recent');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (Array.isArray(data.recentRooms)) {
+          setRooms(data.recentRooms);
+        }
+      } catch (error) {
+        // optional: handle error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, []);
 
   return (
     <section className="relative flex min-h-[calc(100vh-64px)] items-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -107,32 +120,52 @@ const HeroSection = () => {
           >
             <div className="pointer-events-none absolute inset-x-8 top-0 h-10 rounded-b-full bg-gradient-to-r from-indigo-500/10 via-violet-500/10 to-cyan-500/10" />
             <div className="relative h-64 overflow-hidden rounded-2xl bg-slate-950/70 p-3 ring-1 ring-white/5">
-              <motion.div
-                className="flex flex-col gap-3"
-                animate={{ y: ['0%', '-50%'] }}
-                transition={{ repeat: Infinity, duration: 16, ease: 'linear' }}
-              >
-                {[...popularRooms, ...popularRooms].map((room, idx) => (
-                  <motion.div
-                    key={idx}
-                    className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-indigo-500/15 via-violet-500/15 to-cyan-500/15 px-4 py-3 text-sm text-slate-100 shadow-sm shadow-slate-900/40 ring-1 ring-white/10"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                  >
-                    <div>
-                      <p className="font-medium">{room}</p>
-                      <p className="text-xs text-slate-400">Live focus • Cameras optional</p>
-                    </div>
-                    <div className="flex flex-col items-end text-xs text-slate-300">
-                      <span className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        Active
-                      </span>
-                      <span className="text-[11px] text-slate-400">+{12 + (idx % 7)} online</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+              {loading && (
+                <div className="flex flex-col gap-3 text-[11px] text-slate-500">
+                  <div className="h-12 rounded-2xl bg-slate-900/80" />
+                  <div className="h-12 rounded-2xl bg-slate-900/80" />
+                  <div className="h-12 rounded-2xl bg-slate-900/80" />
+                </div>
+              )}
+
+              {!loading && rooms.length === 0 && (
+                <div className="flex h-full items-center justify-center rounded-2xl bg-slate-950/90 text-center text-[11px] text-slate-400">
+                  No active rooms yet. Create your first focus room and it will appear here.
+                </div>
+              )}
+
+              {!loading && rooms.length > 0 && (
+                <motion.div
+                  className="flex flex-col gap-3"
+                  initial={{ opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {rooms.map((room, idx) => (
+                    <motion.div
+                      key={room._id || room.roomId || idx}
+                      className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-indigo-500/15 via-violet-500/15 to-cyan-500/15 px-4 py-3 text-sm text-slate-100 shadow-sm shadow-slate-900/40 ring-1 ring-white/10"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                    >
+                      <div>
+                        <p className="font-medium">{room.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {room.title || 'Live focus • Cameras optional'}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end text-xs text-slate-300">
+                        <span className="flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          Active
+                        </span>
+                        <span className="text-[11px] text-slate-400">+0 online</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
             </div>
           </motion.div>
         </div>

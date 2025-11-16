@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import CreateRoom from './pages/CreateRoom.jsx';
 import BrowseRooms from './pages/BrowseRooms.jsx';
+import Profile from './pages/Profile.jsx';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/create-room" element={<CreateRoom />} />
                 <Route path="/browse-rooms" element={<BrowseRooms />} />
+                <Route path="/profile" element={<Profile />} />
               </Routes>
             </Router>
           </motion.div>
