@@ -8,6 +8,9 @@ import Signup from './pages/Signup.jsx';
 import CreateRoom from './pages/CreateRoom.jsx';
 import BrowseRooms from './pages/BrowseRooms.jsx';
 import Profile from './pages/Profile.jsx';
+import RoomDashboardRouter from './pages/RoomDashboardRouter.jsx';
+import AddTask from './pages/AddTask.jsx';
+import TaskDetail from './pages/TaskDetail.jsx';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -46,6 +49,9 @@ function App() {
                 <Route path="/create-room" element={<CreateRoom />} />
                 <Route path="/browse-rooms" element={<BrowseRooms />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/dashboard/:roomId" element={<RoomDashboardRouter />} />
+                <Route path="/rooms/:roomId/tasks/new" element={<AddTask />} />
+                <Route path="/rooms/:roomId/tasks/:taskId" element={<TaskDetail />} />
               </Routes>
             </Router>
           </motion.div>

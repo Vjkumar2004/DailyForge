@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,6 +26,13 @@ const HeroSection = () => {
 
     fetchRooms();
   }, []);
+
+  const shouldAutoScroll = !loading && rooms.length > 3;
+
+  const scrollingRooms = useMemo(() => {
+    if (!shouldAutoScroll) return rooms;
+    return [...rooms, ...rooms];
+  }, [rooms, shouldAutoScroll]);
 
   return (
     <section className="relative flex min-h-[calc(100vh-64px)] items-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -136,34 +143,46 @@ const HeroSection = () => {
 
               {!loading && rooms.length > 0 && (
                 <motion.div
-                  className="flex flex-col gap-3"
+                  className={
+                    shouldAutoScroll
+                      ? 'auto-scroll-container'
+                      : 'flex flex-col gap-3'
+                  }
                   initial={{ opacity: 0, y: 8 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5 }}
                 >
-                  {rooms.map((room, idx) => (
-                    <motion.div
-                      key={room._id || room.roomId || idx}
-                      className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-indigo-500/15 via-violet-500/15 to-cyan-500/15 px-4 py-3 text-sm text-slate-100 shadow-sm shadow-slate-900/40 ring-1 ring-white/10"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                    >
-                      <div>
-                        <p className="font-medium">{room.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {room.title || 'Live focus • Cameras optional'}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end text-xs text-slate-300">
-                        <span className="flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                          Active
-                        </span>
-                        <span className="text-[11px] text-slate-400">+0 online</span>
-                      </div>
-                    </motion.div>
-                  ))}
+                  <div
+                    className={
+                      shouldAutoScroll
+                        ? 'flex flex-col gap-3 auto-scroll-track'
+                        : 'flex flex-col gap-3'
+                    }
+                  >
+                    {scrollingRooms.map((room, idx) => (
+                      <motion.div
+                        key={`${room._id || room.roomId || idx}-${idx}`}
+                        className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-indigo-500/15 via-violet-500/15 to-cyan-500/15 px-4 py-3 text-sm text-slate-100 shadow-sm shadow-slate-900/40 ring-1 ring-white/10"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                      >
+                        <div>
+                          <p className="font-medium">{room.name}</p>
+                          <p className="text-xs text-slate-400">
+                            {room.title || 'Live focus · Cameras optional'}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end text-xs text-slate-300">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            Active
+                          </span>
+                          <span className="text-[11px] text-slate-400">+0 online</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </div>

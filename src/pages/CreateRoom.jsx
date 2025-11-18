@@ -15,6 +15,7 @@ import {
   FileText,
 } from 'lucide-react';
 import Navbar from '../components/Navbar.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const categories = [
   'Productivity',
@@ -117,6 +118,7 @@ const AccordionSection = ({ title, tooltip, children, open, onToggle }) => (
 );
 
 const CreateRoom = () => {
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [category, setCategory] = useState('');
@@ -158,6 +160,7 @@ const CreateRoom = () => {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [createdRoomId, setCreatedRoomId] = useState(null);
   const [limitError, setLimitError] = useState(false);
 
   const maxNameLength = 40;
@@ -206,6 +209,11 @@ const CreateRoom = () => {
           }
         }
         return;
+      }
+
+      const data = await response.json().catch(() => null);
+      if (data && (data.roomId || data.data?.roomId)) {
+        setCreatedRoomId(data.roomId || data.data.roomId);
       }
 
       setShowSuccess(true);
@@ -787,12 +795,22 @@ const CreateRoom = () => {
               <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
                 <button
                   type="button"
+                  onClick={() => {
+                    if (createdRoomId) {
+                      navigate(`/dashboard/${createdRoomId}`);
+                    }
+                  }}
                   className="rounded-full border border-cyan-400/70 bg-cyan-500/15 px-4 py-1 text-cyan-100 hover:bg-cyan-500/25"
                 >
                   Go to dashboard
                 </button>
                 <button
                   type="button"
+                  onClick={() => {
+                    if (createdRoomId) {
+                      navigate(`/rooms/${createdRoomId}/tasks/new`);
+                    }
+                  }}
                   className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-1 text-slate-100 hover:border-cyan-400/60"
                 >
                   Add tasks now

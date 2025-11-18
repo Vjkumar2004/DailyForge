@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Star, Award, Compass } from 'lucide-react';
+import { Flame, Star, Award, Compass, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar.jsx';
 import { useNavigate } from 'react-router-dom';
 import { deleteUser, signOut } from 'firebase/auth';
@@ -91,6 +91,32 @@ const Profile = () => {
 
   const streakPercent = Math.min(100, Math.round((user.streak / user.streakGoal) * 100));
   const rankPercent = Math.min(100, Math.round(user.rankProgress * 100));
+
+  const handleDeleteRoom = async (roomId) => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      setCreatedRooms((prev) => prev.filter((room) => room.roomId !== roomId));
+      setUser((prev) => ({
+        ...prev,
+        createdRooms: Math.max(0, (prev.createdRooms || 0) - 1),
+      }));
+    } catch (error) {
+      // optional: handle delete room error
+    }
+  };
 
   const handleDeleteAccount = async () => {
     const token = localStorage.getItem('authToken');
@@ -265,9 +291,37 @@ const Profile = () => {
                           : 'Recently created'}
                       </p>
                     </div>
-                    {room.roomId && (
-                      <span className="text-[10px] text-slate-500">#{room.roomId}</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {room.roomId && (
+                        <span className="text-[10px] text-slate-500">#{room.roomId}</span>
+                      )}
+                      {room.roomId && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/dashboard/${room.roomId}`)}
+                            className="inline-flex items-center gap-1 rounded-full border border-cyan-500/60 bg-cyan-500/10 px-2 py-1 text-[10px] font-medium text-cyan-100 hover:border-cyan-400/80 hover:bg-cyan-500/20"
+                          >
+                            Go to dashboard
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/rooms/${room.roomId}/tasks/new`)}
+                            className="inline-flex items-center gap-1 rounded-full border border-violet-500/60 bg-violet-500/10 px-2 py-1 text-[10px] font-medium text-violet-100 hover:border-violet-400/80 hover:bg-violet-500/20"
+                          >
+                            Add tasks now
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => room.roomId && handleDeleteRoom(room.roomId)}
+                        className="inline-flex items-center gap-1 rounded-full border border-rose-500/50 bg-rose-500/10 px-2 py-1 text-[10px] font-medium text-rose-200 hover:border-rose-400/80 hover:bg-rose-500/20"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+.auto-scroll-container {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.auto-scroll-track {
+  animation: vertical-scroll 16s linear infinite;
+}
+
+@keyframes vertical-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
 body {
   @apply bg-slate-950 text-slate-50 font-sans antialiased;
 }

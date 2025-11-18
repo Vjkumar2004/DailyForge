@@ -8,7 +8,41 @@ export const getProfile = async (req, res) => {
     const createdRoomsCount = await Room.countDocuments({ createdBy: user._id });
     const creatorBadge = createdRoomsCount > 0;
 
+    // Daily visit-based streak logic
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let streakChanged = false;
+
+    if (!user.lastVisitDate) {
+      // First visit: start streak at 1
+      user.streak = 1;
+      user.lastVisitDate = today;
+      streakChanged = true;
+    } else {
+      const last = new Date(user.lastVisitDate.getFullYear(), user.lastVisitDate.getMonth(), user.lastVisitDate.getDate());
+      const diffDays = Math.round((today - last) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        // Same day: do nothing
+      } else if (diffDays === 1) {
+        // Consecutive day: continue streak
+        user.streak += 1;
+        user.lastVisitDate = today;
+        streakChanged = true;
+      } else {
+        // Missed one or more days: reset streak
+        user.streak = 1;
+        user.lastVisitDate = today;
+        streakChanged = true;
+      }
+    }
+
+    if (streakChanged) {
+      await user.save();
+    }
+
     return res.status(200).json({
+      _id: user._id,
       username: user.username,
       email: user.email,
       about: user.about,
@@ -35,6 +69,7 @@ export const joinRoom = async (req, res) => {
     const alreadyJoined = user.joinedRooms.some((id) => id.toString() === roomId);
     if (!alreadyJoined) {
       user.joinedRooms.push(roomId);
+      // Joining a room gives points but does not affect daily streak.
       user.points += 10;
       await user.save();
     }
@@ -51,14 +86,11 @@ export const joinRoom = async (req, res) => {
 
 export const updateStreak = async (req, res) => {
   try {
+    // Streak is now managed automatically based on daily visits in getProfile.
     const user = req.user;
 
-    user.streak += 1;
-    user.points += 5;
-    await user.save();
-
     return res.status(200).json({
-      message: 'Streak updated',
+      message: 'Streak is managed automatically based on daily visits.',
       streak: user.streak,
       points: user.points,
     });
@@ -85,7 +117,28 @@ export const getCreatedRooms = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const userId = req.user._id;
+    // Delete all rooms created by this user
+    const createdRooms = await Room.find({ createdBy: userId }).select('_id');
+    const createdRoomIds = createdRooms.map((room) => room._id);
 
+    if (createdRoomIds.length > 0) {
+      // Remove these rooms from other users' joinedRooms arrays
+      await User.updateMany(
+        { joinedRooms: { $in: createdRoomIds } },
+        { $pull: { joinedRooms: { $in: createdRoomIds } } }
+      );
+
+      // Finally delete the rooms themselves
+      await Room.deleteMany({ _id: { $in: createdRoomIds } });
+    }
+
+    // Remove the user from any rooms they have joined
+    await Room.updateMany(
+      { joinedUsers: userId },
+      { $pull: { joinedUsers: userId } }
+    );
+
+    // Delete the user account
     await User.findByIdAndDelete(userId);
 
     return res.status(200).json({ message: 'Account deleted successfully' });

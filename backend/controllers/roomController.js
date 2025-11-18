@@ -1,4 +1,6 @@
+import mongoose from 'mongoose';
 import Room from '../models/Room.js';
+import User from '../models/User.js';
 
 const generateRoomId = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
@@ -156,6 +158,57 @@ export const incrementRoomView = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, views: room.views });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+export const deleteRoom = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const rooms = await Room.find({ roomId: id }).select('_id');
+
+    if (!rooms.length) {
+      // From the dashboard perspective, treat as already deleted
+      return res.status(200).json({ success: true, message: 'Room already deleted' });
+    }
+
+    const roomIds = rooms.map((r) => r._id);
+
+    await User.updateMany(
+      { joinedRooms: { $in: roomIds } },
+      { $pull: { joinedRooms: { $in: roomIds } } }
+    );
+
+    await Room.deleteMany({ _id: { $in: roomIds } });
+
+    return res.status(200).json({ success: true, message: 'Room deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+export const getRoomDetails = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const isObjectId = mongoose.isValidObjectId(roomId);
+
+    const query = isObjectId
+      ? { $or: [{ roomId }, { _id: roomId }] }
+      : { roomId };
+
+    const room = await Room.findOne(query)
+      .select('roomId name category privacy title createdBy joinedUsers isActive createdAt views')
+      .populate('createdBy', '_id username email')
+      .lean();
+
+    if (!room) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    return res.status(200).json({ success: true, room });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }

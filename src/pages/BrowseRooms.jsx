@@ -203,7 +203,10 @@ const BrowseRooms = () => {
                           return;
                         }
 
-                        window.alert(`Joined room: ${room.name || room.title}`);
+                        const id = room.roomId || room._id;
+                        if (id) {
+                          navigate(`/dashboard/${id}`);
+                        }
                       }}
                     >
                       Join Room
