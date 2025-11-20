@@ -236,14 +236,11 @@ export const completeTaskWithEngagement = async (req, res) => {
 
     await task.save();
 
-    // Update user points and streak
+    // Update user points (streak is managed by daily activity, not tasks)
     let pointsToAdd = 0;
     if (!alreadyCompleted) {
       const basePoints = typeof task.points === 'number' ? task.points : task.rewardPoints || 0;
       pointsToAdd = basePoints;
-      if (task.streakEligible) {
-        user.streak += 1;
-      }
       user.points += pointsToAdd;
       await user.save();
     }

@@ -8,39 +8,6 @@ export const getProfile = async (req, res) => {
     const createdRoomsCount = await Room.countDocuments({ createdBy: user._id });
     const creatorBadge = createdRoomsCount > 0;
 
-    // Daily visit-based streak logic
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let streakChanged = false;
-
-    if (!user.lastVisitDate) {
-      // First visit: start streak at 1
-      user.streak = 1;
-      user.lastVisitDate = today;
-      streakChanged = true;
-    } else {
-      const last = new Date(user.lastVisitDate.getFullYear(), user.lastVisitDate.getMonth(), user.lastVisitDate.getDate());
-      const diffDays = Math.round((today - last) / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 0) {
-        // Same day: do nothing
-      } else if (diffDays === 1) {
-        // Consecutive day: continue streak
-        user.streak += 1;
-        user.lastVisitDate = today;
-        streakChanged = true;
-      } else {
-        // Missed one or more days: reset streak
-        user.streak = 1;
-        user.lastVisitDate = today;
-        streakChanged = true;
-      }
-    }
-
-    if (streakChanged) {
-      await user.save();
-    }
-
     return res.status(200).json({
       _id: user._id,
       username: user.username,
@@ -54,6 +21,61 @@ export const getProfile = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateActivity = async (req, res) => {
+  try {
+    const user = req.user;
+
+    // Today as YYYY-MM-DD (UTC-based)
+    const today = new Date().toISOString().slice(0, 10);
+    const lastActive = user.lastActiveDate;
+
+    let streakChanged = false;
+    let streakReset = false;
+
+    if (!lastActive) {
+      // First recorded activity: start streak at 1
+      user.streak = 1;
+      user.lastActiveDate = today;
+      streakChanged = true;
+    } else if (lastActive === today) {
+      // Same day: do nothing
+    } else {
+      const lastDate = new Date(lastActive + 'T00:00:00.000Z');
+      const todayDate = new Date(today + 'T00:00:00.000Z');
+      const diffDays = Math.round(
+        (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diffDays === 1) {
+        // Consecutive day: increment streak
+        user.streak += 1;
+        user.lastActiveDate = today;
+        streakChanged = true;
+      } else if (diffDays > 1) {
+        // Missed one or more days: reset streak to 0
+        user.streak = 0;
+        user.lastActiveDate = today;
+        streakChanged = true;
+        streakReset = true;
+      }
+    }
+
+    if (streakChanged) {
+      await user.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      streak: user.streak,
+      lastActiveDate: user.lastActiveDate,
+      streakChanged,
+      streakReset,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -86,11 +108,10 @@ export const joinRoom = async (req, res) => {
 
 export const updateStreak = async (req, res) => {
   try {
-    // Streak is now managed automatically based on daily visits in getProfile.
     const user = req.user;
 
     return res.status(200).json({
-      message: 'Streak is managed automatically based on daily visits.',
+      message: 'Streak is managed via the update-activity endpoint.',
       streak: user.streak,
       points: user.points,
     });

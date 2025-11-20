@@ -11,6 +11,8 @@ const Navbar = () => {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const [currentUser, setCurrentUser] = useState(null);
   const [streak, setStreak] = useState(0);
+  const [streakGlow, setStreakGlow] = useState(false);
+  const [streakReset, setStreakReset] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -25,26 +27,45 @@ const Navbar = () => {
     const token = localStorage.getItem('authToken');
     if (!currentUser || !token) return;
 
-    const fetchProfile = async () => {
+    const updateActivity = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/user/profile', {
+        const response = await fetch('http://localhost:5000/api/user/update-activity', {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) return;
 
         const data = await response.json();
+
         if (typeof data.streak === 'number') {
-          setStreak(data.streak);
+          setStreak((prev) => {
+            const prevValue = prev;
+            const nextValue = data.streak;
+
+            if (data.streakChanged && nextValue > prevValue) {
+              setStreakGlow(true);
+              setTimeout(() => setStreakGlow(false), 1200);
+            }
+
+            if (data.streakReset) {
+              setStreakReset(true);
+              setTimeout(() => setStreakReset(false), 4000);
+            }
+
+            return nextValue;
+          });
         }
       } catch (error) {
         // optional: handle fetch error
       }
     };
 
-    fetchProfile();
+    updateActivity();
   }, [currentUser]);
 
   const handleLogout = async () => {
@@ -105,9 +126,20 @@ const Navbar = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              <div className="flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
-                <span className="text-xs">🔥</span>
+              <div
+                className={`relative flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200 transition-shadow ${
+                  streakGlow ? 'ring-2 ring-amber-400/70 shadow-[0_0_25px_rgba(251,191,36,0.6)] animate-pulse' : ''
+                }`}
+              >
+                <span className="text-xs">
+                  🔥
+                </span>
                 <span className="font-medium">{streak}d</span>
+                {streakReset && (
+                  <div className="absolute -bottom-8 left-1/2 z-20 w-40 -translate-x-1/2 rounded-md bg-slate-900/95 px-2 py-1 text-[10px] text-slate-100 shadow-lg shadow-black/50">
+                    Streak reset. Try again tomorrow!
+                  </div>
+                )}
               </div>
               <button
                 type="button"

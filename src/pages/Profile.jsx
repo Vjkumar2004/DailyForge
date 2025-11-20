@@ -31,6 +31,29 @@ const Profile = () => {
 
     const fetchProfile = async () => {
       try {
+        let updatedStreak = null;
+
+        // First, update activity so streak is based purely on daily visits
+        try {
+          const activityRes = await fetch('http://localhost:5000/api/user/update-activity', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
+          });
+
+          if (activityRes.ok) {
+            const activityData = await activityRes.json();
+            if (typeof activityData.streak === 'number') {
+              updatedStreak = activityData.streak;
+            }
+          }
+        } catch (e) {
+          // optional: ignore update-activity errors and still show profile
+        }
+
         const response = await fetch('http://localhost:5000/api/user/profile', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -50,7 +73,7 @@ const Profile = () => {
           createdRooms: data.createdRoomsCount || 0,
           creatorBadge: !!data.creatorBadge,
           points: data.points || 0,
-          streak: data.streak || 0,
+          streak: typeof updatedStreak === 'number' ? updatedStreak : data.streak || 0,
           streakGoal: 30,
           rankProgress,
           bio: data.about || '',

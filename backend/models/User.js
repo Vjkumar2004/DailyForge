@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     joinedRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room', default: [] }],
     streak: { type: Number, default: 0 },
     points: { type: Number, default: 0 },
-    lastVisitDate: { type: Date },
+    lastActiveDate: { type: String, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );

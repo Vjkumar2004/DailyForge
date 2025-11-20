@@ -16,6 +16,29 @@ const UserBoard = ({ room }) => {
     setLoading(true);
     setError(null);
     try {
+      let updatedStreak = null;
+
+      // Ensure streak is updated based on daily activity before reading profile
+      try {
+        const activityRes = await fetch('http://localhost:5000/api/user/update-activity', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (activityRes.ok) {
+          const activityData = await activityRes.json();
+          if (typeof activityData.streak === 'number') {
+            updatedStreak = activityData.streak;
+          }
+        }
+      } catch (e) {
+        // ignore update-activity errors and still try to show data
+      }
+
       const [profileRes, tasksRes] = await Promise.all([
         fetch('http://localhost:5000/api/user/profile', {
           headers: { Authorization: `Bearer ${token}` },
@@ -27,7 +50,9 @@ const UserBoard = ({ room }) => {
 
       if (profileRes.ok) {
         const profile = await profileRes.json();
-        setUser({ points: profile.points || 0, streak: profile.streak || 0 });
+        const streakValue =
+          typeof updatedStreak === 'number' ? updatedStreak : profile.streak || 0;
+        setUser({ points: profile.points || 0, streak: streakValue });
       }
 
       if (tasksRes.ok) {
